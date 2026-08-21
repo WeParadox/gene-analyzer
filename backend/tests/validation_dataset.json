@@ -1,0 +1,111 @@
+{
+  "description": "Validation dataset for Gene Analyzer tool. Each test case includes input sequences and expected alignment results.",
+  "version": "1.0.0",
+  "scoring_scheme": "BLASTN (match=+2, mismatch=-3, gap_open=-7, gap_extend=-2)",
+  "test_cases": [
+    {
+      "id": 1,
+      "name": "Identical sequences",
+      "reference": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCG",
+      "query": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCG",
+      "expected": {
+        "identity": 100.0,
+        "gaps": 0,
+        "matches": 58,
+        "mismatches": 0,
+        "score": 116
+      }
+    },
+    {
+      "id": 2,
+      "name": "Single mismatch",
+      "reference": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCG",
+      "query": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTTGCG",
+      "expected": {
+        "identity": 98.28,
+        "gaps": 0,
+        "matches": 57,
+        "mismatches": 1,
+        "score": 111
+      }
+    },
+    {
+      "id": 3,
+      "name": "Insertion in query",
+      "reference": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCG",
+      "query": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTAAGGCG",
+      "expected": {
+        "identity": 100.0,
+        "gaps": 1,
+        "matches": 58,
+        "mismatches": 0,
+        "score": 109
+      }
+    },
+    {
+      "id": 4,
+      "name": "Deletion in query",
+      "reference": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCG",
+      "query": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGCG",
+      "expected": {
+        "identity": 100.0,
+        "gaps": 1,
+        "matches": 57,
+        "mismatches": 0,
+        "score": 109
+      }
+    },
+    {
+      "id": 5,
+      "name": "Multiple mismatches",
+      "reference": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCG",
+      "query": "ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACTCTTGCG",
+      "expected": {
+        "identity": 96.55,
+        "gaps": 0,
+        "matches": 56,
+        "mismatches": 2,
+        "score": 106
+      }
+    },
+    {
+      "id": 6,
+      "name": "Short identical sequences",
+      "reference": "ATCGATCG",
+      "query": "ATCGATCG",
+      "expected": {
+        "identity": 100.0,
+        "gaps": 0,
+        "matches": 8,
+        "mismatches": 0,
+        "score": 16
+      }
+    },
+    {
+      "id": 7,
+      "name": "Reverse complement (low identity expected)",
+      "reference": "ATCGATCG",
+      "query": "CGATCGAT",
+      "expected": {
+        "identity": 0.0,
+        "gaps": 0,
+        "matches": 0,
+        "mismatches": 8,
+        "score": -24
+      }
+    },
+    {
+      "id": 8,
+      "name": "With ambiguous bases",
+      "reference": "ATCGNRYSWK",
+      "query": "ATCGNRYSWK",
+      "expected": {
+        "identity": 100.0,
+        "gaps": 0,
+        "matches": 10,
+        "mismatches": 0,
+        "score": 20
+      }
+    }
+  ]
+}

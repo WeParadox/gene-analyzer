@@ -13,7 +13,7 @@ Gene Analyzer is a web tool for analyzing amplified gene sequences using pairwis
 | **Scope** | HLA genes only | Any gene targets you define |
 | **Reference database** | Pre-built (millions of alleles) | You provide reference sequences |
 | **Allele naming** | Official WHO nomenclature | Your own naming scheme |
-| **Alignment** | Specialized for HLA polymorphism | General pairwise alignment (Needleman-Wunsch) |
+| **Alignment** | Specialized for HLA polymorphism | General pairwise alignment (BLASTN) |
 | **Use case** | Clinical HLA typing | Research: AMR genes, virulence factors, housekeeping genes, custom panels |
 | **Cost** | Free (EBI-hosted) | Free (self-hosted) |
 
@@ -40,6 +40,8 @@ npm run dev
 
 - **Frontend UI**: http://localhost:5173
 - **API Docs**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **Health Check**: http://localhost:8000/health
 
 ---
 
@@ -72,19 +74,6 @@ curl -X POST http://localhost:8000/api/genes/ \
   }'
 ```
 
-#### Batch Load (Script)
-```python
-import requests
-import json
-
-with open('my_genes.json') as f:
-    genes = json.load(f)
-
-for gene in genes:
-    resp = requests.post('http://localhost:8000/api/genes/', json=gene)
-    print(f"Added {gene['name']}: {resp.status_code}")
-```
-
 ---
 
 ### Step 2: Upload Sequences
@@ -95,8 +84,6 @@ Prepare your sequences in FASTA format:
 >patient_001
 ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCGATCAACGGCCCGGGCACGCTGGCGATCGGCAAC
 >patient_002
-ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCGATCAACGGCCCGGGCACGCTGGCGATCGGCAAC
->patient_003
 ATGCGTTTATGCGCTGGGCGATACCGAAACGATCACCGCAATGGCGGCGACGCTGGCGATCAACGGCCCGGGCACGCTGGCGATCGGCAAC
 ```
 
@@ -142,16 +129,21 @@ Ref:   ATCG-ATCG
        |||| ||||
 Query: ATCGAATCG
 ```
-- `|` = Match (yellow)
-- `.` = Mismatch (red)
+- `|` = Match
+- `.` = Mismatch
 - ` ` = Gap (insertion/deletion)
 
-#### Statistics
-| Metric | Meaning |
-|--------|---------|
-| **Identity %** | Percentage of matching bases (excluding gap positions) |
-| **Gaps** | Number of indel events (not individual gap characters) |
-| **Score** | Alignment score (higher = better match) |
+#### Metrics Explained
+
+| Metric | Description | Good Value |
+|--------|-------------|------------|
+| **Identity %** | Percentage of matching bases (excluding gap positions) | >95% for same allele |
+| **Gaps** | Number of indel events | 0 for point mutations |
+| **Matches** | Number of identical bases | Higher is better |
+| **Mismatches** | Number of different bases | Lower is better |
+| **E-value** | Expected number of matches by chance (lower = more significant) | <0.01 for significant |
+| **Bit Score** | Normalized alignment score (higher = better) | >50 for good match |
+| **Coverage** | Percentage of reference covered by alignment | >90% for full coverage |
 
 #### Identity Ranges
 | Identity | Interpretation |
@@ -160,6 +152,22 @@ Query: ATCGAATCG
 | 80-95% | Related variant / SNP differences |
 | 60-80% | Distant homolog / possible contamination |
 | <60% | Non-target or severely degraded |
+
+---
+
+### Step 5: Export Results
+
+#### Via API
+```bash
+# Export as JSON
+curl "http://localhost:8000/api/alignment/export/1?format=json"
+
+# Export as CSV
+curl "http://localhost:8000/api/alignment/export/1?format=csv"
+
+# Export as FASTA (aligned sequences)
+curl "http://localhost:8000/api/alignment/export/1?format=fasta"
+```
 
 ---
 
@@ -179,41 +187,41 @@ Query: ATCGAATCG
 | POST | `/api/alignment/run-bulk` | Run bulk alignment |
 | GET | `/api/alignment/gene/{id}` | Get alignments for a gene |
 | GET | `/api/alignment/stats/{id}` | Get alignment statistics |
+| GET | `/api/alignment/export/{id}?format=json\|csv\|fasta` | Export results |
+| GET | `/health` | Health check with stats |
 
 ---
 
 ## Alignment Algorithm
 
 - **Algorithm**: Needleman-Wunsch (global pairwise alignment)
-- **Scoring**: Match = +2, Mismatch = -1, Gap open = -10, Gap extend = -0.5
+- **Scoring**: BLASTN defaults
+  - Match: +2
+  - Mismatch: -3
+  - Gap open: -7
+  - Gap extend: -2
+- **E-value**: Karlin-Altschul statistics (simplified)
+- **Bit score**: Normalized using lambda/K parameters
 - **Identity**: Calculated as `matches / comparable_positions` (gap positions excluded)
 - **Gaps**: Counted as gap events (single insertion/deletion), not individual gap characters
 
 ---
 
-## Example Workflow: AMR Gene Panel
+## Validation
 
-1. **Define your panel** (50 AMR genes):
-   ```bash
-   for gene in blaCTX-M-15 blaKPC-2 blaNDM-1 mcr-1 vanA; do
-     curl -X POST http://localhost:8000/api/genes/ \
-       -H "Content-Type: application/json" \
-       -d "{\"name\": \"$gene\", \"category\": \"AMR\", \"reference_sequence\": \"...\"}"
-   done
-   ```
+To verify the tool is working correctly, run the test suite:
 
-2. **Upload clinical isolates**:
-   ```bash
-   for isolate in isolate_001.fasta isolate_002.fasta isolate_003.fasta; do
-     gene_id=$(curl -s http://localhost:8000/api/genes/ | python3 -c "import sys,json; print([g['id'] for g in json.load(sys.stdin) if '$isolate' in g['name']][0])")
-     curl -X POST "http://localhost:8000/api/sequences/upload?gene_id=$gene_id" -F "file=@$isolate"
-   done
-   ```
+```bash
+cd gene-analyzer/backend
+pip install pytest
+pytest tests/test_alignment.py -v
+```
 
-3. **Run alignments and get results**:
-   ```bash
-   curl -s http://localhost:8000/api/alignment/stats/1 | python3 -m json.tool
-   ```
+Or validate against the provided dataset:
+
+```bash
+python tests/validate_tool.py
+```
 
 ---
 
@@ -225,7 +233,8 @@ Query: ATCGAATCG
 | "Invalid sequence characters" | Only ATCGNRYSWKMBDHV allowed |
 | Low identity scores | Check if correct reference gene selected |
 | Frontend not loading | Ensure backend is running on port 8000 |
-| Upload fails | Check file size (< 10MB) and encoding (UTF-8) |
+| Upload fails | Check file size (< 1MB) and encoding (UTF-8) |
+| "Alignment failed" | Check sequences are valid DNA |
 
 ---
 

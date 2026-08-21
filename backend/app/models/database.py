@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from ..config import settings
@@ -52,11 +52,22 @@ class Alignment(Base):
     gene_id = Column(Integer, ForeignKey("genes.id"), nullable=False)
     sequence_id = Column(Integer, ForeignKey("sequences.id"), nullable=False)
     score = Column(Integer, default=0)
-    identity = Column(Integer, default=0)
+    identity = Column(Float, default=0.0)
     gaps = Column(Integer, default=0)
+    gap_characters = Column(Integer, default=0)
+    matches = Column(Integer, default=0)
+    mismatches = Column(Integer, default=0)
+    comparable_positions = Column(Integer, default=0)
     aligned_ref = Column(Text, default="")
     aligned_query = Column(Text, default="")
     match_string = Column(Text, default="")
+    e_value = Column(Float, default=float('inf'))
+    bit_score = Column(Float, default=0.0)
+    coverage = Column(Float, default=0.0)
+    query_length = Column(Integer, default=0)
+    reference_length = Column(Integer, default=0)
+    alignment_length = Column(Integer, default=0)
+    scoring_scheme = Column(String(200), default="BLASTN")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     gene = relationship("Gene", back_populates="alignments")

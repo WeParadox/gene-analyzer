@@ -6,10 +6,13 @@ A free, open-source web tool for analyzing amplified gene sequences with pairwis
 
 - **Gene Database**: Store and manage reference sequences for up to 50 target genes
 - **FASTA Upload**: Upload user sequences in FASTA format
-- **Sequence Alignment**: Pairwise alignment using Needleman-Wunsch algorithm
+- **BLASTN Alignment**: Standard BLASTN scoring parameters (match=+2, mismatch=-3, gap_open=-7, gap_extend=-2)
+- **Statistical Scores**: E-value, bit score, coverage, identity, and gap analysis
 - **Interactive Visualization**: Color-coded alignment viewer with mismatch highlighting
 - **Statistics Dashboard**: Identity distribution, gap analysis, and summary statistics
-- **Export**: Download results and reports
+- **Export**: Download results in JSON, CSV, or FASTA formats
+- **Input Validation**: Comprehensive sequence and parameter validation
+- **Unit Tests**: Automated test suite for alignment logic
 
 ## Tech Stack
 
@@ -29,6 +32,7 @@ docker-compose up --build
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
+- Health Check: http://localhost:8000/health
 
 ### Manual Setup
 
@@ -60,11 +64,14 @@ See [USAGE.md](USAGE.md) for the complete guide.
 3. **Upload Sequences**: Click "Upload FASTA" to add your amplified sequences
 4. **Run Alignment**: Click "Align All" or align individual sequences
 5. **View Results**: See alignment visualization and statistics
+6. **Export**: Download results in JSON, CSV, or FASTA format
 
 ## Alignment Algorithm
 
 - **Algorithm**: Needleman-Wunsch (global pairwise alignment)
-- **Scoring**: Match = +2, Mismatch = -1, Gap open = -10, Gap extend = -0.5
+- **Scoring**: BLASTN defaults (match=+2, mismatch=-3, gap_open=-7, gap_extend=-2)
+- **E-value**: Statistical significance using Karlin-Altschul statistics
+- **Bit score**: Normalized alignment score
 - **Identity**: Calculated as `matches / comparable_positions` (gap positions excluded)
 - **Gaps**: Counted as gap events (single insertion/deletion), not individual gap characters
 
@@ -89,6 +96,18 @@ See [USAGE.md](USAGE.md) for the complete guide.
 | POST | `/api/alignment/run-bulk` | Run bulk alignment |
 | GET | `/api/alignment/gene/{id}` | Get gene alignments |
 | GET | `/api/alignment/stats/{id}` | Get alignment stats |
+| GET | `/api/alignment/export/{id}` | Export results (JSON/CSV/FASTA) |
+| GET | `/health` | Health check with stats |
+
+## Testing
+
+Run the test suite:
+
+```bash
+cd backend
+pip install pytest
+pytest tests/ -v
+```
 
 ## Project Structure
 
@@ -102,6 +121,9 @@ gene-analyzer/
 │   │   ├── routers/             # API endpoints
 │   │   ├── services/            # Business logic
 │   │   └── data/                # Demo data
+│   ├── tests/                   # Unit tests
+│   │   ├── test_alignment.py    # Alignment tests
+│   │   └── validation_dataset.json
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
@@ -111,7 +133,10 @@ gene-analyzer/
 │   ├── package.json
 │   └── Dockerfile
 ├── docker-compose.yml
-└── README.md
+├── CHANGELOG.md
+├── LICENSE
+├── README.md
+└── USAGE.md
 ```
 
 ## Demo Dataset
@@ -122,9 +147,13 @@ The app includes 10 sample genes for testing:
 - **Virulence genes**: luxS, fimH
 - **Housekeeping genes**: rpoB, gyrA
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes.
+
 ## License
 
-MIT License - Free for personal and commercial use.
+MIT License - See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
