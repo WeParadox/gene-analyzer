@@ -52,11 +52,30 @@ npm run dev
 
 ## Usage
 
+See [USAGE.md](USAGE.md) for the complete guide.
+
+**Quick Start:**
 1. **Load Demo Data**: On first launch, the app loads 10 demo genes automatically
 2. **Select Gene**: Choose a gene target from the left panel
 3. **Upload Sequences**: Click "Upload FASTA" to add your amplified sequences
 4. **Run Alignment**: Click "Align All" or align individual sequences
 5. **View Results**: See alignment visualization and statistics
+
+## Alignment Algorithm
+
+- **Algorithm**: Needleman-Wunsch (global pairwise alignment)
+- **Scoring**: Match = +2, Mismatch = -1, Gap open = -10, Gap extend = -0.5
+- **Identity**: Calculated as `matches / comparable_positions` (gap positions excluded)
+- **Gaps**: Counted as gap events (single insertion/deletion), not individual gap characters
+
+## How It Compares to IMGT
+
+| Feature | IMGT/HLA | Gene Analyzer |
+|---------|----------|---------------|
+| **Scope** | HLA genes only | Any gene targets you define |
+| **References** | Pre-built (millions of alleles) | You provide reference sequences |
+| **Use case** | Clinical HLA typing | Research: AMR, virulence, custom panels |
+| **Cost** | Free (EBI-hosted) | Free (self-hosted) |
 
 ## API Endpoints
 

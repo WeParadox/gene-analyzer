@@ -87,18 +87,35 @@ async def run_bulk_alignment(
             query=sequence.sequence
         )
 
-        new_alignment = Alignment(
-            gene_id=request.gene_id,
-            sequence_id=seq_id,
-            score=alignment_result['score'],
-            identity=alignment_result['identity'],
-            gaps=alignment_result['gaps'],
-            aligned_ref=alignment_result['aligned_ref'],
-            aligned_query=alignment_result['aligned_query'],
-            match_string=alignment_result['match_string']
+        existing = await db.execute(
+            select(Alignment).where(
+                Alignment.gene_id == request.gene_id,
+                Alignment.sequence_id == seq_id
+            )
         )
-        db.add(new_alignment)
-        alignments.append(new_alignment)
+        existing_alignment = existing.scalar_one_or_none()
+
+        if existing_alignment:
+            existing_alignment.score = alignment_result['score']
+            existing_alignment.identity = alignment_result['identity']
+            existing_alignment.gaps = alignment_result['gaps']
+            existing_alignment.aligned_ref = alignment_result['aligned_ref']
+            existing_alignment.aligned_query = alignment_result['aligned_query']
+            existing_alignment.match_string = alignment_result['match_string']
+            alignments.append(existing_alignment)
+        else:
+            new_alignment = Alignment(
+                gene_id=request.gene_id,
+                sequence_id=seq_id,
+                score=alignment_result['score'],
+                identity=alignment_result['identity'],
+                gaps=alignment_result['gaps'],
+                aligned_ref=alignment_result['aligned_ref'],
+                aligned_query=alignment_result['aligned_query'],
+                match_string=alignment_result['match_string']
+            )
+            db.add(new_alignment)
+            alignments.append(new_alignment)
 
     await db.commit()
     for alignment in alignments:

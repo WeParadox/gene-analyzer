@@ -20,33 +20,6 @@ def parse_fasta(file_content: str) -> List[Dict[str, str]]:
     return records
 
 
-def parse_FASTA_simple(file_content: str) -> List[Dict[str, str]]:
-    records = []
-    current_name = None
-    current_seq = []
-
-    for line in file_content.strip().split('\n'):
-        line = line.strip()
-        if line.startswith('>'):
-            if current_name is not None:
-                records.append({
-                    'name': current_name,
-                    'sequence': ''.join(current_seq)
-                })
-            current_name = line[1:].split()[0]
-            current_seq = []
-        elif line:
-            current_seq.append(line.upper())
-
-    if current_name is not None:
-        records.append({
-            'name': current_name,
-            'sequence': ''.join(current_seq)
-        })
-
-    return records
-
-
 def generate_alignment_report(
     gene_name: str,
     reference: str,
